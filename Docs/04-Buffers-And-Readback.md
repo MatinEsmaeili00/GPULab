@@ -221,6 +221,39 @@ memory properly.
 
 ---
 
+## Where this comes from
+
+**Engine source**
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphUtils.h` | `CreateStructuredBuffer` (several overloads), `AddEnqueueCopyPass` |
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h` | `CreateBuffer`, `CreateSRV`, `CreateUAV` |
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphResources.h` | `FRDGBufferDesc::CreateStructuredDesc` |
+| `Engine/Source/Runtime/RHI/Public/RHIGPUReadback.h` | `FRHIGPUBufferReadback`, and the `IsReady()` / `Lock()` / `Unlock()` API that the non-stalling version of this lesson would use |
+
+`RHIGPUReadback.h` is worth opening properly. It is short, and reading `IsReady()`
+next to `Lock()` makes the "ask now, collect later" pattern obvious in a way prose
+does not.
+
+**Official Epic documentation**
+
+- [Render Dependency Graph](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine)
+  — see "Creating Resources" and "Buffer Uploads".
+
+**Real non-stalling readbacks in the engine.** For a shipped example of polling
+instead of blocking, search the engine source for `FRHIGPUBufferReadback` — the GPU
+occlusion and GPU-particle systems both keep a small queue of in-flight readbacks
+and check them on later frames.
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## Next
 
 → **[05 - Multi-Pass RDG](05-Multi-Pass-RDG.md)** - where RDG starts to earn its keep.

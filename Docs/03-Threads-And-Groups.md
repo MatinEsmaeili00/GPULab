@@ -226,6 +226,40 @@ lines and removes a whole category of bug.
 
 ---
 
+## Where this comes from
+
+**The HLSL side** is standard Direct3D, not Unreal-specific, so Microsoft's
+reference is the authority here:
+
+- [`numthreads` attribute](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-attributes-numthreads)
+  — including the hard limits: `z <= 64`, and `x*y*z <= 1024`.
+- [SV_DispatchThreadID](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-dispatchthreadid)
+  — states the relationship used in this lesson:
+  `SV_DispatchThreadID = SV_GroupID * numthreads + SV_GroupThreadID`
+- [SV_GroupID](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupid)
+- [SV_GroupThreadID](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupthreadid)
+- [SV_GroupIndex](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupindex)
+- [Compute Shader Overview](https://learn.microsoft.com/en-us/windows/win32/direct3d11/direct3d-11-advanced-stages-compute-shader)
+- [Programming guide for HLSL](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-pguide)
+
+**Engine source**
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphUtils.h` | the five `FComputeShaderUtils::GetGroupCount` overloads, and `GetGroupCountWrapped` for dispatches too large for one dimension |
+
+The "multiple of 64" advice comes from how the hardware actually schedules: NVIDIA
+runs threads in 32-wide *warps*, AMD in 32- or 64-wide *wavefronts*. A group of 10
+threads still occupies a full bundle and wastes the rest.
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## Next
 
 → **[04 - Buffers and Readback](04-Buffers-And-Readback.md)** - GPU work that is not a picture.

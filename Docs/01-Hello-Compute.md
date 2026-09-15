@@ -278,6 +278,42 @@ is where RDG compiles the graph and records real GPU commands.
 
 ---
 
+## Where this comes from
+
+**Engine source — the primary reference.** Every API in this lesson was read from
+these files in your `UE_5.8` install:
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/GlobalShader.h` | `FGlobalShader`, `DECLARE_GLOBAL_SHADER`, `IMPLEMENT_GLOBAL_SHADER` |
+| `Engine/Source/Runtime/RenderCore/Public/ShaderParameterStruct.h` | `SHADER_USE_PARAMETER_STRUCT` |
+| `Engine/Source/Runtime/RenderCore/Public/ShaderParameterMacros.h` | `BEGIN_SHADER_PARAMETER_STRUCT`, `SHADER_PARAMETER_RDG_TEXTURE_UAV` |
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphUtils.h` | `FComputeShaderUtils::AddPass`, `GetGroupCount`, `RegisterExternalTexture` |
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h` | `FRDGBuilder`, `CreateUAV`, `AllocParameters`, `Execute` |
+| `Engine/Source/Runtime/RenderCore/Public/ShaderCore.h` | `AddShaderSourceDirectoryMapping` |
+
+**Official Epic documentation**
+
+- [Creating a New Global Shader as a Plugin in Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/creating-a-new-global-shader-as-a-plugin-in-unreal-engine)
+  — Epic's own walkthrough of the same plugin structure this one uses.
+- [Adding Global Shaders to Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/adding-global-shaders-to-unreal-engine)
+- [Render Dependency Graph in Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine)
+
+**Find more examples yourself.** Search the engine for `IMPLEMENT_GLOBAL_SHADER` —
+there are several hundred real uses of exactly this pattern:
+
+```
+grep -rn "IMPLEMENT_GLOBAL_SHADER" "C:/Program Files/Epic Games/UE_5.8/Engine/Source"
+```
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## Next
 
 → **[02 - Parameters](02-Parameters.md)** - make it move.

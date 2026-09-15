@@ -208,6 +208,39 @@ written one.
 
 ---
 
+## Where this comes from
+
+**Engine source**
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/PixelShaderUtils.h` | `FPixelShaderUtils::AddFullscreenPass`, `DrawFullscreenTriangle`, `InitFullscreenPipelineState` |
+| `Engine/Source/Runtime/RenderCore/Private/PixelShaderUtils.cpp` | shows `InitFullscreenPipelineState` picking up `FScreenVertexShaderVS` for you |
+| `Engine/Source/Runtime/RenderCore/Public/CommonRenderResources.h` | `FScreenVertexShaderVS` — the vertex shader you do not have to write |
+| `Engine/Shaders/Private/Tools/FullscreenVertexShader.usf` | the actual HLSL of that vertex shader. Worth opening: it explains why you only get `SV_POSITION` and no UV, which is why this lesson computes its own. |
+| `Engine/Source/Runtime/RenderCore/Public/ShaderParameterMacros.h` | `RENDER_TARGET_BINDING_SLOTS` |
+| `Engine/Source/Runtime/RenderCore/Public/RHIStaticStates.h` | `TStaticBlendState`, `TStaticRasterizerState`, `TStaticDepthStencilState` for the optional arguments |
+
+**Official Epic documentation**
+
+- [Render Dependency Graph](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine)
+  — see "Raster Passes" for how `RENDER_TARGET_BINDING_SLOTS` and load actions work.
+
+**On the single oversized triangle.** The reason it beats a two-triangle quad is
+that GPUs shade in 2x2 pixel quads, so the diagonal seam of a quad gets shaded
+twice. Background:
+
+- [Compute Shader Overview](https://learn.microsoft.com/en-us/windows/win32/direct3d11/direct3d-11-advanced-stages-compute-shader)
+  — for the contrast with the compute path.
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## Next
 
 → **[07 - Persistent Simulation](07-Persistent-Simulation.md)** - state that survives the frame.

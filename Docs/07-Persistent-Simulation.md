@@ -237,6 +237,44 @@ fly.
 
 ---
 
+## Where this comes from
+
+**Engine source**
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h` | `QueueTextureExtraction`, `RegisterExternalTexture` — the two halves of making a texture outlive its graph |
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphUtils.h` | `AddClearUAVPass` (many overloads — one per clear-value type) |
+| `Engine/Source/Runtime/RendererInterface/...` / `RenderGraphResources.h` | `IPooledRenderTarget`, the ref-counted texture you hold between frames |
+
+**Official Epic documentation**
+
+- [Render Dependency Graph](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine)
+  — the "External Resources" section is exactly this problem: getting a resource in
+  and out of the graph across frame boundaries.
+
+**On the physics.** The three lines in `SimulateCS` are a discrete form of the
+[wave equation](https://en.wikipedia.org/wiki/Wave_equation), using a 5-point
+Laplacian stencil. You do not need the maths to use it, but if you want it:
+
+- The Laplacian term `(L + R + U + D) - 4*H` is the standard finite-difference
+  approximation of the second spatial derivative.
+- The instability you hit when you raise the wave-speed constant past ~0.5 is the
+  [CFL condition](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition)
+  being violated — the wave is trying to travel more than one cell per step.
+
+**Where this pattern shows up for real.** Unreal's own water surface, fluid sims in
+Niagara, and the snow and sand deformation systems all use the same read-one /
+write-the-other / extract-and-keep structure.
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## You have finished the lessons
 
 Go to **[99 - Cheat Sheet](99-Cheat-Sheet.md)** and keep it open while you write

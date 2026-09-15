@@ -246,6 +246,46 @@ See below.
 
 ---
 
+## Where this comes from
+
+**Engine source**
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h` | `CreateTexture`, and the setup-vs-execute split that makes barriers automatic |
+| `Engine/Source/Runtime/RenderCore/Public/RenderGraphResources.h` | `FRDGTextureDesc::Create2D` and the `TexCreate_*` flags |
+| `Engine/Source/Runtime/RenderCore/Public/ShaderParameterMacros.h` | `SHADER_PARAMETER_RDG_TEXTURE` vs `..._TEXTURE_UAV` — the read/write distinction RDG reads dependencies from |
+| `Engine/Source/Runtime/RenderCore/Public/RHIStaticStates.h` | `TStaticSamplerState`, and every filter and address mode |
+
+**Official Epic documentation**
+
+- [Render Dependency Graph](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine)
+  — this is the page to actually read once you have this lesson working. It covers
+  transient resource allocation, async compute scheduling, and the validation layer.
+
+**Community deep-dive**
+
+- [staticJPL / Render-Dependency-Graph-Documentation](https://github.com/staticJPL/Render-Dependency-Graph-Documentation)
+  — a long community write-up of how RDG fits into the wider UE5 rendering pipeline,
+  with a worked `FSceneViewExtension` triangle-shader example. Written against 5.1,
+  so a few details have moved, but the architecture explanation holds up well.
+
+**Real multi-pass code.** `Engine/Source/Runtime/Renderer/Private/PostProcess/` is
+full of well-written examples — bloom is a chain of downsample and upsample passes
+and is very close in shape to the separable-blur exercise above.
+
+**On `SampleLevel` vs `Sample`**
+
+- [Programming guide for HLSL](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-pguide)
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## Next
 
 → **[06 - Pixel Shader Pass](06-Pixel-Shader-Pass.md)** - the other half of the GPU.

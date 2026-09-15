@@ -207,6 +207,39 @@ Event Tick
 
 ---
 
+## Where this comes from
+
+**Engine source**
+
+| File | What it defines |
+|---|---|
+| `Engine/Source/Runtime/RenderCore/Public/ShaderParameterMacros.h` | every `SHADER_PARAMETER_*` macro and the C++ to HLSL type mapping |
+| `Engine/Source/Runtime/RenderCore/Public/ShaderCompilerCore.h` | `FShaderCompilerEnvironment::SetDefine` |
+| `Engine/Source/Runtime/RenderCore/Public/GlobalShader.h` | `ModifyCompilationEnvironment`, `FGlobalShaderPermutationParameters` |
+
+The type table in this lesson was built by reading the macro definitions, and
+cross-checked against real uses in `Engine/Source/Runtime/Renderer/Private/`.
+
+**Official Epic documentation**
+
+- [Render Dependency Graph](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine)
+  — the "Shader Parameter Structs" and "Uniform Buffers" sections cover this ground.
+
+**On the 16-byte padding rule**
+
+- [Packing rules for constant variables](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-packing-rules)
+  — Microsoft's reference. This is the actual hardware rule Unreal's macros are
+  working around for you.
+- [Shader Constants (HLSL)](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-constants)
+
+> **A note on sources.** This lesson was written by reading the engine source listed
+> above directly, not by following a tutorial. The engine paths are the primary
+> source - they are on your disk, they match your exact engine version, and they
+> cannot go out of date or 404. The links are there for background and for a second
+> explanation in someone else's words.
+
+---
+
 ## Next
 
 → **[03 - Threads and Groups](03-Threads-And-Groups.md)** - see the parallelism.

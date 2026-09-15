@@ -116,3 +116,31 @@ Two languages, two places:
 The comments in this plugin are much denser than you would write in production code.
 That is on purpose - this is a textbook you can compile. When you copy a pattern into
 your own project, strip them back to the ones that still earn their place.
+
+---
+
+## Where this came from
+
+This was written by reading the **UE 5.8 engine source directly**, not by following a
+tutorial. Every API signature here was checked against the headers in the engine
+install before it was used.
+
+Each lesson doc ends with a **"Where this comes from"** section listing the exact
+engine files behind it, plus links to the official Epic documentation and to good
+community write-ups for a second explanation.
+
+The engine paths are the primary source, deliberately. They are on your disk, they
+match your exact engine version, and unlike a blog post they cannot rot. When
+something in here disagrees with your engine, the engine is right - go read the
+header.
+
+The main external references, collected:
+
+- [Creating a New Global Shader as a Plugin in Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/creating-a-new-global-shader-as-a-plugin-in-unreal-engine) - Epic
+- [Adding Global Shaders to Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/adding-global-shaders-to-unreal-engine) - Epic
+- [Render Dependency Graph in Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine) - Epic
+- [staticJPL / Render-Dependency-Graph-Documentation](https://github.com/staticJPL/Render-Dependency-Graph-Documentation) - community deep-dive on RDG and the UE5 render pipeline
+- [Programming guide for HLSL](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-pguide) - Microsoft, for the HLSL language itself
+- [Compute Shader Overview](https://learn.microsoft.com/en-us/windows/win32/direct3d11/direct3d-11-advanced-stages-compute-shader) - Microsoft
+
+All lessons were verified running on D3D12 against UE 5.8.
