@@ -54,17 +54,32 @@ Requires **Unreal Engine 5.8** and a C++ project. Tested on Windows / D3D12.
 
 ## Running a lesson
 
-Every lesson is a Blueprint node under the **GPULab** category.
+### The fast way
 
-The quickest possible test, with no setup at all:
+The plugin ships a **GPULab Demo** actor that builds its own render target and
+runs any lesson on a plane, live in the editor viewport.
 
-1. Open any Blueprint (the Level Blueprint is fine).
-2. Drag off **Event BeginPlay** → search for `Lesson 01 Hello Compute`.
-3. Plug in a Render Target that has **Support UAV** ticked.
-4. Press Play. The Render Target now holds a red/green gradient.
+1. Make the display material once - [Doc 08](Docs/08-Setup-In-Editor.md#making-the-display-material),
+   about six clicks.
+2. Drag **GPULab Demo** from the Place Actors panel into your level.
+3. Set **Display Material**, then pick a **Lesson** from the dropdown.
+4. Press **Ctrl + R** for Realtime if you want the animated ones to move.
 
-To *see* it, put that same Render Target into a material and drop it on a plane.
-[Doc 08](Docs/08-Setup-In-Editor.md) walks through it with exact clicks.
+Every per-lesson knob (colours, blur radius, thread view, damping) is in the
+Details panel, so you can poke at the parameters without touching code.
+
+### The manual way
+
+Every lesson is also a plain Blueprint node under the **GPULab** category:
+
+```
+Event BeginPlay ──► Lesson 01 Hello Compute (Output RT)
+```
+
+Pass it a Render Target with **Support UAV** ticked, put that render target in a
+material, and put the material on a plane. [Doc 08](Docs/08-Setup-In-Editor.md)
+walks through it with exact clicks - worth doing once, because it is how you will
+wire up your own shaders later.
 
 ---
 
@@ -77,10 +92,13 @@ GPULab/
   Shaders/Private/*.usf           the HLSL - the code that runs ON the GPU
   Source/GPULab/
     GPULab.Build.cs               which engine modules we depend on
-    Public/GPULabLibrary.h        the Blueprint nodes - the menu of lessons
+    Public/
+      GPULabLibrary.h             the Blueprint nodes - the menu of lessons
+      GPULabDemoActor.h           the drop-in actor that shows the output
     Private/
       GPULabModule.cpp            maps /Plugin/GPULab to the Shaders folder
       GPULabCommon.h              shared safety checks
+      GPULabDemoActor.cpp         builds a UAV render target in code
       Lesson01..07*.cpp           one file per lesson - the code that DRIVES the GPU
 ```
 
