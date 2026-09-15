@@ -1,0 +1,34 @@
+// Lesson 4 - buffers instead of textures.
+//
+// Not all GPU work is pictures. Very often you just want "do this maths to a
+// million numbers". Buffers are how you hand arrays to the GPU.
+#include "/Engine/Public/Platform.ush"
+
+// StructuredBuffer   = read only.   C++ side calls this an SRV.
+// RWStructuredBuffer = read/write.  C++ side calls this a UAV.
+//
+// "Structured" means the GPU knows how big one element is, so InputValues[7]
+// just works instead of you doing byte maths by hand.
+StructuredBuffer<float>   InputValues;
+RWStructuredBuffer<float> OutputValues;
+
+float Multiplier;
+uint  NumElements;
+
+// This is a 1D problem, so the group is 1D too: 64 threads in a row.
+[numthreads(64, 1, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint Index = DispatchThreadId.x;
+
+	// Same guard as always. If you have 100 numbers you still launch 2 groups of
+	// 64 = 128 threads, and threads 100..127 must not touch the buffer.
+	if (Index >= NumElements)
+	{
+		return;
+	}
+
+	// Every thread handles exactly one element, all at the same time.
+	// There is no loop here. The parallelism IS the loop.
+	OutputValues[Index] = InputValues[Index] * Multiplier;
+}

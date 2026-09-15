@@ -1,0 +1,91 @@
+// Lesson 5 - two passes that talk to each other.
+//
+// One .usf file can hold more than one entry point. Here we have two, and C++
+// registers each of them as a separate shader with IMPLEMENT_GLOBAL_SHADER.
+#include "/Engine/Public/Platform.ush"
+
+// ---------------------------------------------------------------------------
+// PASS A - draw some moving dots into a scratch texture.
+// ---------------------------------------------------------------------------
+RWTexture2D<float4> ScratchOut;
+uint2 ScratchSize;
+float Time;
+
+[numthreads(8, 8, 1)]
+void DotsCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint2 PixelCoord = DispatchThreadId.xy;
+	if (PixelCoord.x >= ScratchSize.x || PixelCoord.y >= ScratchSize.y)
+	{
+		return;
+	}
+
+	float2 UV = (float2(PixelCoord) + 0.5f) / float2(ScratchSize);
+
+	float3 Color = float3(0.02f, 0.02f, 0.04f);
+
+	// Five dots orbiting the middle of the image.
+	for (int i = 0; i < 5; ++i)
+	{
+		float Phase  = Time * 0.7f + float(i) * 1.2566f;   // 1.2566 = 2*pi/5
+		float2 Center = 0.5f + 0.32f * float2(cos(Phase), sin(Phase));
+
+		float Dist = length(UV - Center);
+
+		// smoothstep(a, b, x) fades from 1 to 0 as x goes from a to b.
+		// Here that makes a soft round dot of radius ~0.03.
+		float Dot = 1.0f - smoothstep(0.0f, 0.03f, Dist);
+
+		// A different hue per dot.
+		float3 DotColor = 0.5f + 0.5f * cos(float3(0, 2, 4) + float(i) * 1.0f);
+		Color += Dot * DotColor;
+	}
+
+	ScratchOut[PixelCoord] = float4(Color, 1.0f);
+}
+
+// ---------------------------------------------------------------------------
+// PASS B - read the scratch texture and blur it into the final output.
+//
+// This pass READS what pass A WROTE. That is the whole point of the lesson.
+// ---------------------------------------------------------------------------
+Texture2D<float4> BlurInput;    // read-only view of pass A's result
+SamplerState      BlurSampler;  // how to read it: bilinear, clamped at the edges
+RWTexture2D<float4> BlurOut;
+uint2 OutSize;
+int   BlurRadius;
+
+[numthreads(8, 8, 1)]
+void BlurCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint2 PixelCoord = DispatchThreadId.xy;
+	if (PixelCoord.x >= OutSize.x || PixelCoord.y >= OutSize.y)
+	{
+		return;
+	}
+
+	float2 TexelSize = 1.0f / float2(OutSize);
+	float2 UV = (float2(PixelCoord) + 0.5f) * TexelSize;
+
+	float4 Sum = 0.0f;
+	float  Count = 0.0f;
+
+	// A plain box blur: average every texel in a square around us.
+	// (A real blur would do two 1D passes instead, which is much cheaper -
+	//  that is a good exercise once this one works.)
+	for (int y = -BlurRadius; y <= BlurRadius; ++y)
+	{
+		for (int x = -BlurRadius; x <= BlurRadius; ++x)
+		{
+			float2 Offset = float2(x, y) * TexelSize;
+
+			// SampleLevel instead of Sample: compute shaders have no automatic
+			// mip selection (that needs neighbouring pixels in a quad, which only
+			// pixel shaders have), so we must say which mip we want. 0 = biggest.
+			Sum   += BlurInput.SampleLevel(BlurSampler, UV + Offset, 0);
+			Count += 1.0f;
+		}
+	}
+
+	BlurOut[PixelCoord] = Sum / Count;
+}

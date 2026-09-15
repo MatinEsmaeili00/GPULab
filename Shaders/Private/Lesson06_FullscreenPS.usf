@@ -1,0 +1,54 @@
+// Lesson 6 - a PIXEL shader, not a compute shader.
+//
+// The GPU has two ways to run your code:
+//
+//   COMPUTE - "run this function N times". You choose N. You write wherever you
+//             want through a UAV. That is lessons 1-5.
+//
+//   RASTER  - "draw these triangles". The hardware turns triangles into pixels
+//             for you, then runs your pixel shader once per covered pixel. You
+//             do not choose which pixels; the triangle shape does. The output
+//             goes to the bound render target, not to a UAV.
+//
+// This lesson uses the raster path. Unreal draws ONE big triangle that covers
+// the whole target (cheaper than two triangles forming a quad, because there is
+// no seam down the diagonal), and our pixel shader colours it.
+//
+// We do not write the vertex shader. Unreal already has one for exactly this
+// job: FScreenVertexShaderVS. All it gives us is SV_POSITION.
+#include "/Engine/Public/Platform.ush"
+
+float4 Tint;
+float  Time;
+uint2  OutputSize;
+
+// SV_POSITION in a PIXEL shader is the pixel's position on screen, already at
+// the pixel CENTRE - so a 256-wide target gives 0.5, 1.5, ... 255.5.
+// SV_Target0 means "write this to the first bound render target".
+void MainPS(
+	float4 SvPosition : SV_POSITION,
+	out float4 OutColor : SV_Target0)
+{
+	// Because SvPosition is already centred, we do not add 0.5 here - unlike the
+	// compute lessons, where DispatchThreadID is a whole number.
+	float2 UV = SvPosition.xy / float2(OutputSize);
+
+	// --- a checkerboard ---
+	// floor() both coordinates onto an 8x8 grid, add them, and look at whether
+	// the total is odd or even.
+	float2 Grid = floor(UV * 8.0f);
+	float  Checker = fmod(Grid.x + Grid.y, 2.0f);
+
+	// --- a diagonal band sliding across ---
+	float Band = saturate(sin((UV.x + UV.y) * 10.0f - Time * 3.0f) * 0.5f + 0.5f);
+
+	float3 DarkSquare  = float3(0.05f, 0.06f, 0.10f);
+	float3 LightSquare = float3(0.85f, 0.88f, 0.95f);
+
+	float3 Color = lerp(DarkSquare, LightSquare, Checker);
+
+	// Brighten wherever the band is.
+	Color += Band * 0.35f * float3(0.9f, 0.4f, 0.1f);
+
+	OutColor = float4(Color * Tint.rgb, 1.0f);
+}

@@ -1,0 +1,54 @@
+// Lesson 1 - the smallest useful compute shader.
+//
+// Every .usf file in Unreal should start by including Platform.ush. It sets up
+// the differences between DirectX, Vulkan, Metal and consoles so you can write
+// one shader instead of five.
+#include "/Engine/Public/Platform.ush"
+
+// ---------------------------------------------------------------------------
+// Shader inputs.
+//
+// These names must match EXACTLY the names in the C++ FParameters struct.
+// Unreal links them together by string name at compile time. A typo here gives
+// you a shader that compiles fine and silently does nothing.
+// ---------------------------------------------------------------------------
+
+// "RW" means read-write. This is the UAV - the thing a compute shader writes
+// its results into. Think of it as the output image.
+RWTexture2D<float4> OutTexture;
+
+// Plain values are just global variables in HLSL.
+uint2 TextureSize;
+
+// ---------------------------------------------------------------------------
+// The entry point.
+//
+// [numthreads(8, 8, 1)] says: one GROUP of work is 8 threads wide, 8 threads
+// tall, 1 deep. So a group is 64 threads. The C++ side decides how many groups
+// to launch. 64 is a good default because GPUs run threads in bundles of 32
+// (NVIDIA "warp") or 64 (AMD "wavefront"), and 64 divides cleanly into both.
+// ---------------------------------------------------------------------------
+[numthreads(8, 8, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	// SV_DispatchThreadID is this thread's unique position across the WHOLE
+	// launch, not just inside its group. For a 256x256 image it runs 0..255.
+	// We use it directly as the pixel coordinate: one thread = one pixel.
+	uint2 PixelCoord = DispatchThreadId.xy;
+
+	// We launch whole groups only, so if the image is 250 pixels wide we still
+	// launch 32 groups = 256 threads. The last 6 threads per row have no pixel
+	// to write. Without this guard they would write outside the texture.
+	if (PixelCoord.x >= TextureSize.x || PixelCoord.y >= TextureSize.y)
+	{
+		return;
+	}
+
+	// Turn the pixel position into a 0..1 coordinate ("UV").
+	// The + 0.5 puts us in the middle of the pixel instead of its corner.
+	float2 UV = (float2(PixelCoord) + 0.5f) / float2(TextureSize);
+
+	// Red goes up to the right, green goes up going down. Blue stays 0.
+	// The result is the classic red/green gradient square.
+	OutTexture[PixelCoord] = float4(UV.x, UV.y, 0.0f, 1.0f);
+}

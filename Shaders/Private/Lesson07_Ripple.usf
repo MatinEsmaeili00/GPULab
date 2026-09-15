@@ -1,0 +1,118 @@
+// Lesson 7 - a simulation that remembers.
+//
+// Two entry points again:
+//   SimulateCS   moves the water forward one step
+//   VisualiseCS  turns the water state into something you can look at
+#include "/Engine/Public/Platform.ush"
+
+// The state texture holds two numbers per pixel, not a colour:
+//   .x = height   (how high the water is here)
+//   .y = velocity (how fast it is moving up or down)
+Texture2D<float2>   StateIn;    // last frame's state - READ ONLY
+RWTexture2D<float2> StateOut;   // this frame's state - WRITE ONLY
+
+uint2  SimSize;
+float  Damping;        // slightly less than 1, so ripples fade out
+float2 DropPosition;   // 0..1 across the texture
+float  DropStrength;   // 0 means "no poke this frame"
+
+// Read the state at a coordinate, clamped so we never fall off the edge.
+float2 LoadState(int2 Coord)
+{
+	Coord = clamp(Coord, int2(0, 0), int2(SimSize) - 1);
+
+	// .Load() reads one exact texel with no filtering and no sampler.
+	// The third component of the int3 is the mip level.
+	return StateIn.Load(int3(Coord, 0));
+}
+
+[numthreads(8, 8, 1)]
+void SimulateCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint2 PixelCoord = DispatchThreadId.xy;
+	if (PixelCoord.x >= SimSize.x || PixelCoord.y >= SimSize.y)
+	{
+		return;
+	}
+
+	int2 Coord = int2(PixelCoord);
+
+	float2 Self = LoadState(Coord);
+	float  Height   = Self.x;
+	float  Velocity = Self.y;
+
+	// The four neighbours.
+	float Left  = LoadState(Coord + int2(-1,  0)).x;
+	float Right = LoadState(Coord + int2( 1,  0)).x;
+	float Up    = LoadState(Coord + int2( 0, -1)).x;
+	float Down  = LoadState(Coord + int2( 0,  1)).x;
+
+	// This is the wave equation, and it is simpler than it sounds.
+	// "Laplacian" just means: how far am I from the average of my neighbours?
+	// If I am lower than everyone around me, this is positive and pushes me up.
+	float Laplacian = (Left + Right + Up + Down) - 4.0f * Height;
+
+	// Acceleration pushes the velocity, velocity pushes the height.
+	// Exactly like gravity on a falling object, but sideways and everywhere.
+	Velocity += Laplacian * 0.25f;
+
+	// Without damping the ripples never stop and the numbers eventually explode.
+	Velocity *= Damping;
+
+	Height += Velocity;
+
+	// --- poke the water ---
+	if (DropStrength > 0.0f)
+	{
+		float2 UV = (float2(PixelCoord) + 0.5f) / float2(SimSize);
+		float Dist = length(UV - DropPosition);
+
+		// A soft blob about 2% of the texture wide.
+		float Blob = 1.0f - smoothstep(0.0f, 0.02f, Dist);
+		Height += Blob * DropStrength;
+	}
+
+	StateOut[PixelCoord] = float2(Height, Velocity);
+}
+
+// ---------------------------------------------------------------------------
+// Turn height into a picture.
+// ---------------------------------------------------------------------------
+Texture2D<float2>   VisIn;
+RWTexture2D<float4> VisOut;
+uint2 VisSize;
+
+[numthreads(8, 8, 1)]
+void VisualiseCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint2 PixelCoord = DispatchThreadId.xy;
+	if (PixelCoord.x >= VisSize.x || PixelCoord.y >= VisSize.y)
+	{
+		return;
+	}
+
+	int2 Coord = int2(PixelCoord);
+
+	float Height = VisIn.Load(int3(Coord, 0)).x;
+
+	// Fake lighting: compare the height left-vs-right and up-vs-down to get the
+	// slope of the surface, then pretend a light is shining from the top-left.
+	// This is the same trick a normal map uses.
+	int2 MaxCoord = int2(VisSize) - 1;
+	float Lx = VisIn.Load(int3(clamp(Coord + int2(-1, 0), int2(0, 0), MaxCoord), 0)).x;
+	float Rx = VisIn.Load(int3(clamp(Coord + int2( 1, 0), int2(0, 0), MaxCoord), 0)).x;
+	float Uy = VisIn.Load(int3(clamp(Coord + int2( 0,-1), int2(0, 0), MaxCoord), 0)).x;
+	float Dy = VisIn.Load(int3(clamp(Coord + int2( 0, 1), int2(0, 0), MaxCoord), 0)).x;
+
+	float2 Slope = float2(Rx - Lx, Dy - Uy);
+	float  Light = saturate(0.5f + dot(Slope, normalize(float2(-1.0f, -1.0f))) * 4.0f);
+
+	// Deep blue where the water is low, bright cyan where it is high.
+	float3 Deep    = float3(0.02f, 0.06f, 0.20f);
+	float3 Shallow = float3(0.30f, 0.85f, 1.00f);
+
+	float3 Color = lerp(Deep, Shallow, saturate(Height * 4.0f + 0.5f));
+	Color *= Light;
+
+	VisOut[PixelCoord] = float4(Color, 1.0f);
+}

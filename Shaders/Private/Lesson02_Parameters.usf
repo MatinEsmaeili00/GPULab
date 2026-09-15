@@ -1,0 +1,39 @@
+// Lesson 2 - values travelling from C++ into the shader.
+#include "/Engine/Public/Platform.ush"
+
+RWTexture2D<float4> OutTexture;
+uint2  TextureSize;
+
+// These four are the new part. They arrive from C++ every time we dispatch.
+float  Time;      // seconds, we feed it in and the pattern moves
+float  Scale;     // how many stripes fit across the image
+float4 ColorA;    // FLinearColor in C++ becomes float4 here
+float4 ColorB;
+
+[numthreads(8, 8, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint2 PixelCoord = DispatchThreadId.xy;
+	if (PixelCoord.x >= TextureSize.x || PixelCoord.y >= TextureSize.y)
+	{
+		return;
+	}
+
+	float2 UV = (float2(PixelCoord) + 0.5f) / float2(TextureSize);
+
+	// Move the origin to the middle of the image, so (0,0) is the centre.
+	float2 Centered = UV - 0.5f;
+
+	// distance from centre -> rings.  atan2 -> angle, which gives us spokes.
+	float Radius = length(Centered);
+	float Angle  = atan2(Centered.y, Centered.x);
+
+	// Combine rings and spokes into one wobbling value, and slide it with Time.
+	float Wave = sin(Radius * Scale * 6.2831853f - Time * 2.0f + Angle * 3.0f);
+
+	// sin() returns -1..1. Remap to 0..1 so we can use it to blend colours.
+	float T = Wave * 0.5f + 0.5f;
+
+	// lerp(a, b, t) = a when t is 0, b when t is 1, a mix in between.
+	OutTexture[PixelCoord] = float4(lerp(ColorA.rgb, ColorB.rgb, T), 1.0f);
+}

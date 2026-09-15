@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "GPULab",
+	"Description": "Small, self-contained lessons in low-level GPU programming in Unreal: FGlobalShader, compute shaders, and the Render Dependency Graph (RDG).",
+	"Category": "Rendering",
+	"CreatedBy": "Matin Esmaeili",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GPULab",
+			"Type": "Runtime",
+			"LoadingPhase": "PostConfigInit"
+		}
+	]
+}

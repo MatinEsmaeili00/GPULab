@@ -1,0 +1,56 @@
+// Lesson 3 - seeing the thread numbering with your own eyes.
+#include "/Engine/Public/Platform.ush"
+
+RWTexture2D<float4> OutTexture;
+uint2 TextureSize;
+uint  ViewMode;
+
+// GPULAB_THREADS_XY is pushed in from C++ by ModifyCompilationEnvironment, so
+// there is exactly ONE place that decides the group size. Change it in the .cpp
+// and this file follows automatically.
+#define THREADS GPULAB_THREADS_XY
+
+[numthreads(THREADS, THREADS, 1)]
+void MainCS(
+	uint3 DispatchThreadId : SV_DispatchThreadID,  // position across the whole launch
+	uint3 GroupId          : SV_GroupID,           // which group am I in
+	uint3 GroupThreadId    : SV_GroupThreadID,     // position inside my own group
+	uint  GroupIndex       : SV_GroupIndex)        // flat 0..(THREADS*THREADS-1) inside my group
+{
+	uint2 PixelCoord = DispatchThreadId.xy;
+	if (PixelCoord.x >= TextureSize.x || PixelCoord.y >= TextureSize.y)
+	{
+		return;
+	}
+
+	float3 Color = float3(0, 0, 0);
+
+	if (ViewMode == 0)
+	{
+		// Global position. Smooth gradient across the whole image - this is the
+		// number you almost always want, because it maps 1 thread to 1 pixel.
+		Color = float3(float2(DispatchThreadId.xy) / float2(TextureSize), 0.0f);
+	}
+	else if (ViewMode == 1)
+	{
+		// Which group. You see chunky blocks, one colour per group, because every
+		// thread in a group returns the same GroupId.
+		uint2 GroupCount = (TextureSize + THREADS - 1) / THREADS;
+		Color = float3(float2(GroupId.xy) / float2(GroupCount), 0.0f);
+	}
+	else if (ViewMode == 2)
+	{
+		// Position inside the group. You see the same small gradient tile
+		// repeated over and over, once per group.
+		Color = float3(float2(GroupThreadId.xy) / float(THREADS), 0.0f);
+	}
+	else
+	{
+		// The flat index inside the group, 0..63 for an 8x8 group, shown as grey.
+		// This is the order threads sit in shared memory.
+		float T = float(GroupIndex) / float(THREADS * THREADS - 1);
+		Color = float3(T, T, T);
+	}
+
+	OutTexture[PixelCoord] = float4(Color, 1.0f);
+}

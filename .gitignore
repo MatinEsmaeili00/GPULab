@@ -1,0 +1,19 @@
+# Unreal build artefacts. None of this belongs in a repo.
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.user
+*.opendb
+*.VC.db
+
+# OS
+Thumbs.db
+.DS_Store
