@@ -11,6 +11,20 @@ and the `Docs/` folder explains the *why* behind each one in plain English.
 
 ---
 
+## Two ways to use this
+
+**Read it** — [`Docs/`](Docs) explains the finished code, one concept per
+chapter. Good when you want to understand how something works.
+
+**Build it** — [`Tutorial/`](Tutorial/README.md) walks you through writing your
+own version from an empty folder: create this file, put this in it, build, check
+you see this. Good when you want it to stick.
+
+They cross-link, and the best results come from doing both: build a tutorial
+chapter, then read the matching doc for why it worked.
+
+---
+
 ## What you will learn
 
 | # | Lesson | The one idea |
@@ -88,7 +102,8 @@ wire up your own shaders later.
 ```
 GPULab/
   GPULab.uplugin                  plugin manifest
-  Docs/                           the written lessons
+  Docs/                           the written lessons - how it works
+  Tutorial/                       build-along - write your own from scratch
   Shaders/Private/*.usf           the HLSL - the code that runs ON the GPU
   Source/GPULab/
     GPULab.Build.cs               which engine modules we depend on
